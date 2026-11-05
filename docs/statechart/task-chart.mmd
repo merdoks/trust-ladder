@@ -1,0 +1,43 @@
+---
+title: "trust-ladder: a verified task"
+---
+stateDiagram-v2
+  state "Legend" as legend {
+    lg0: none
+    lg1: working
+    lg2: done
+  }
+  class lg0 blue
+  class lg1 orange
+  class lg2 teal
+  s0: No task
+  s1: Open, agent's verifier
+  s2: Open, your verifier
+  s3: Open, agent's verifier, verifier running
+  s4: Passed, agent's verifier
+  s5: Open, your verifier, verifier running
+  s6: Failed, your verifier
+  s7: Passed, agent's verifier, verifier running
+  s8: Failed, your verifier, verifier running
+  [*] --> s0
+  s0 --> s1: agent creates the task
+  s1 --> s2: you set the real verifier
+  s1 --> s3: agent runs verify
+  s2 --> s5: agent runs verify
+  s3 --> s4: verifier exits 0
+  s3 --> s5: you set the real verifier
+  s4 --> s7: agent runs verify
+  s5 --> s2: result ignored [verifier was replaced]
+  s5 --> s6: verifier fails
+  s6 --> s8: agent runs verify
+  s7 --> s4: verifier exits 0
+  s8 --> s6: verifier fails
+  class s0 blue
+  class s1 orange
+  class s2 orange
+  class s3 orange
+  class s4 teal
+  class s5 orange
+  class s6 orange
+  class s7 teal
+  class s8 orange

@@ -1,0 +1,81 @@
+---
+title: "trust-ladder: a correction from taught to caught"
+---
+stateDiagram-v2
+  state "Legend" as legend {
+    lg0: none
+    lg1: guard
+    lg2: review
+    lg3: rule
+    lg4: inactive
+  }
+  class lg0 blue
+  class lg1 teal
+  class lg2 purple
+  class lg3 yellow
+  class lg4 orange
+  s0: No rule
+  s1: Guard on
+  s2: Review on
+  s3: Reminder on
+  s4: Guard off
+  s5: Damaged rule (skipped, others still enforced)
+  s6: Guard on - last call blocked
+  s7: Review off
+  s8: Review on - last call sent to approval
+  s9: Reminder off
+  s10: Guard on, observe mode
+  s11: Guard on, observe mode - last call ran
+  [*] --> s0
+  s1 --> s4: you /trust disable
+  s1 --> s5: rules.json gets damaged
+  s1 --> s6: a matching call arrives
+  s1 --> s0: you /trust remove
+  s1 --> s10: you /trust observe
+  s2 --> s7: you /trust disable
+  s2 --> s5: rules.json gets damaged
+  s2 --> s8: a matching call arrives
+  s2 --> s0: you /trust remove
+  s3 --> s9: you /trust disable
+  s3 --> s5: rules.json gets damaged
+  s3 --> s0: you /trust remove
+  s4 --> s1: you /trust enable
+  s4 --> s0: you /trust remove
+  s4 --> s5: rules.json gets damaged
+  s5 --> s0: you /trust remove
+  s6 --> s4: you /trust disable
+  s6 --> s5: rules.json gets damaged
+  s6 --> s0: you /trust remove
+  s6 --> s10: you /trust observe
+  s7 --> s2: you /trust enable
+  s7 --> s0: you /trust remove
+  s7 --> s5: rules.json gets damaged
+  s8 --> s7: you /trust disable
+  s8 --> s5: rules.json gets damaged
+  s8 --> s0: you /trust remove
+  s8 --> s2: you /trust observe or you /trust enforce
+  s9 --> s3: you /trust enable
+  s9 --> s0: you /trust remove
+  s9 --> s5: rules.json gets damaged
+  s10 --> s1: you /trust enforce
+  s10 --> s4: you /trust disable
+  s10 --> s5: rules.json gets damaged
+  s10 --> s11: a matching call arrives
+  s10 --> s0: you /trust remove
+  s4 --> s10: you /trust enable
+  s11 --> s1: you /trust enforce
+  s11 --> s4: you /trust disable
+  s11 --> s5: rules.json gets damaged
+  s11 --> s0: you /trust remove
+  class s0 blue
+  class s1 teal
+  class s2 purple
+  class s3 yellow
+  class s4 orange
+  class s5 orange
+  class s6 teal
+  class s7 orange
+  class s8 purple
+  class s9 orange
+  class s10 teal
+  class s11 teal

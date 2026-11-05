@@ -1,0 +1,42 @@
+name: trust-ladder
+version: "0.1.0"
+description: "Correct your agent once and it stays corrected: trust-ladder compiles each correction to the highest rung it can prove (a pre_tool_call guard that blocks the repeat, a post-write check, an injected rule, or human review), verifies the guard against the mistake before installing it, gates 'done' on verifier commands, and keeps a ledger of every catch (/teach, /trust, /verify). Disclosure — local only: stores rules, tasks and a catch ledger (matched snippets, no full arguments) under <HERMES_HOME>/plugin-data/trust-ladder/; no network, no telemetry, no credentials; verifier commands you or the agent attach run only through Hermes's own terminal tool (normal approvals apply); guards are best-effort pattern matches, not a sandbox."
+author: "Martins Bluka"
+license: MIT
+manifest_version: 2
+api_version: 1
+requires_hermes: ">=0.22.7"
+tags: [safety, guardrails, verification, corrections, workflow]
+provides_tools:
+  - trust_ladder_learn
+  - trust_ladder_task
+provides_hooks:
+  - pre_tool_call
+  - transform_tool_result
+  - pre_llm_call
+  - pre_verify
+  - transform_llm_output
+config_schema:
+  mode:
+    type: str
+    choices: [enforce, observe]
+    default: enforce
+    label: "Mode"
+    description: "enforce blocks matching calls; observe only logs what guards would have blocked."
+  inject_rules:
+    type: bool
+    default: true
+    label: "Remind the agent of rules every turn"
+  correction_nudge:
+    type: bool
+    default: true
+    label: "Nudge the agent to record corrections"
+    description: "When a message looks like a correction, ask the agent to call trust_ladder_learn."
+  notify_catches:
+    type: bool
+    default: true
+    label: "Show a notice in the chat when a guard blocks a call"
+  max_injected_rules:
+    type: int
+    default: 20
+    label: "Max rules injected per turn"
