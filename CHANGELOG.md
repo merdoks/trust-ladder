@@ -1,6 +1,7 @@
 # Changelog
 
 ## 0.1.2
+- Re-learning an identical guard reuses the existing rule (no duplicate when the model also calls learn).
 - `auto_learn` (default on): a short, imperative correction from the user ("never push straight to
   main") that the deterministic parser compiles to a self-tested guard is installed in `pre_llm_call`,
   before the model replies. Enforcement no longer depends on the model calling `trust_ladder_learn`.

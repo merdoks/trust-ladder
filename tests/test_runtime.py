@@ -291,3 +291,11 @@ def test_auto_learn_skips_questions_and_vague(ctx):
     for msg in ("why did you push to main?", "don't be so verbose", "/trust", "please be careful"):
         fire(ctx, "pre_llm_call", session_id="a3", user_message=msg)
     assert not store.load_rules()
+
+
+def test_model_relearning_auto_rule_is_not_duplicated(ctx):
+    fire(ctx, "pre_llm_call", session_id="d1", user_message="Never push straight to main.")
+    handler = ctx.tools["trust_ladder_learn"]["handler"]
+    out = json.loads(handler({"rule": "never push directly to main", "bad_example": "git push origin main"}))
+    assert out["ok"] and out["rule_id"] == "r1"
+    assert len(store.load_rules()) == 1

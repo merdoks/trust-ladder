@@ -224,6 +224,15 @@ class TrustLadder:
             why = f"compiled the supplied {rung} spec and verified it against your examples"
 
         record["rung"] = rung
+        # The same enforcement learned twice (e.g. auto_learn from the user, then the model's own call)
+        # stays one rule: reuse the enabled rule with the identical matcher/check and rung.
+        if record.get("match") or record.get("check"):
+            for existing in self.rules():
+                if (existing.get("enabled", True) and existing.get("rung") == rung
+                        and existing.get("match") == record.get("match")
+                        and existing.get("check") == record.get("check")):
+                    return {"ok": True, "rule": existing, "rung": rung, "problems": problems,
+                            "why": f"already enforced by {existing['id']}; kept that rule"}
         rule = store.add_rule(record)
         self.invalidate()
         store.append_ledger({"type": "learned", "rule": rule["id"], "rung": rung, "source": source,
