@@ -268,3 +268,26 @@ def test_string_example_that_guard_misses_still_downgrades(ctx):
     handler = ctx.tools["trust_ladder_learn"]["handler"]
     out = json.loads(handler({"rule": "never push straight to main", "bad_example": "git status"}))
     assert out["ok"] and out["rung"].startswith("3")
+
+
+# v0.1.2: the user's own correction is enforced without the model calling trust_ladder_learn.
+def test_auto_learn_from_user_correction(ctx):
+    out = fire(ctx, "pre_llm_call", session_id="a1",
+               user_message="No. Never push straight to main. Always push a branch and open a PR instead.")
+    assert out and "now enforced" in out["context"]
+    rules = [r for r in store.load_rules() if r.get("source") == "user"]
+    assert len(rules) == 1 and rules[0]["rung"] == "guard"
+    res = fire(ctx, "pre_tool_call", tool_name="terminal", args={"command": "git push origin main"}, task_id="a2")
+    assert res and res["action"] == "block"
+    assert fire(ctx, "pre_tool_call", tool_name="terminal", args={"command": "git push -u origin fix/x"},
+                task_id="a2") is None
+    # repeating the correction does not duplicate it
+    fire(ctx, "pre_llm_call", session_id="a1",
+         user_message="No. Never push straight to main. Always push a branch and open a PR instead.")
+    assert len([r for r in store.load_rules() if r.get("source") == "user"]) == 1
+
+
+def test_auto_learn_skips_questions_and_vague(ctx):
+    for msg in ("why did you push to main?", "don't be so verbose", "/trust", "please be careful"):
+        fire(ctx, "pre_llm_call", session_id="a3", user_message=msg)
+    assert not store.load_rules()

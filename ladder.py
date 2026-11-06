@@ -365,8 +365,30 @@ class TrustLadder:
             logger.exception("trust-ladder: pre_llm_call failed")
             return None
 
+    def _auto_learn(self, session_id: str, user_message: str) -> dict | None:
+        """Enforce the user's own correction without waiting for the model to call trust_ladder_learn.
+
+        Only a short, imperative message (no question) whose text the deterministic parser turns into
+        a matcher that passes its self-test is installed; anything vaguer is left to the model.
+        """
+        msg = " ".join(str(user_message or "").split())
+        if not msg or len(msg) > 600 or msg.startswith("/") or "?" in msg:
+            return None
+        if not CORRECTION_HINT.search(msg):
+            return None
+        parsed = compiler.compile_text(msg)
+        if parsed.get("rung") not in ("guard", "review", "check") or compiler.selftest(parsed):
+            return None
+        outcome = self.learn(msg, source="user", session_id=session_id)
+        if not outcome.get("ok") or outcome.get("rung") not in ("guard", "review", "check"):
+            return None
+        return outcome
+
     def _pre_llm(self, session_id: str, user_message: str, **kwargs: Any):
         parts: list[str] = []
+        auto = None
+        if self.setting("auto_learn", True) and user_message:
+            auto = self._auto_learn(session_id, user_message)
         rules = [r for r in self.rules() if r.get("enabled", True)]
         if rules and self.setting("inject_rules", True):
             limit = _int(self.setting("max_injected_rules", 20), 20, lo=1, hi=200)
@@ -394,7 +416,13 @@ class TrustLadder:
                          "trust_ladder_task action=verify passes):")
             parts.extend(f"- {t['id']} {t['name']}: verifier `{t['verifier']}` ({t.get('status', 'open')})"
                          for t in open_tasks[:10])
-        if self.setting("correction_nudge", True) and user_message and CORRECTION_HINT.search(user_message[:2000]):
+        if auto:
+            rule = auto["rule"]
+            how = _describe_match(rule.get("match") or {}) or _describe_check(rule.get("check") or {})
+            parts.append(f"[trust-ladder] The user's correction is now enforced as {rule['id']} "
+                         f"(rung {compiler.RUNG_LABELS[auto['rung']].split('(')[0].strip()}: {how}). "
+                         "Tell the user in one short line; you do not need to call trust_ladder_learn for it.")
+        elif self.setting("correction_nudge", True) and user_message and CORRECTION_HINT.search(user_message[:2000]):
             parts.append("[trust-ladder] If this message corrects something you did, call trust_ladder_learn "
                          "with the correction (and a guard + bad_example when the mistake was a tool call) "
                          "so it is enforced from now on.")

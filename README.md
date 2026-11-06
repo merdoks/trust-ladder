@@ -119,6 +119,7 @@ Requires Hermes ≥ 0.22.7. No Python dependencies, no API keys.
 |---|---|---|
 | `mode` | `enforce` | `observe` logs would-be blocks without blocking |
 | `inject_rules` | `true` | Remind the agent of rules each turn |
+| `auto_learn` | `true` | Install a clear correction's guard before the model replies (deterministic parser + self-test; no model needed) |
 | `correction_nudge` | `true` | Ask the agent to record corrections it receives |
 | `notify_catches` | `true` | Post a one-line notice in the chat when a guard blocks a call |
 | `max_injected_rules` | `20` | Cap on rules injected per turn |
