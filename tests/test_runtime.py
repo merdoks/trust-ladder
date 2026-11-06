@@ -237,3 +237,34 @@ def test_ledger_trims(ctx, monkeypatch):
     for i in range(100):
         store.append_ledger({"type": "block", "rule": "r1", "evidence": "x" * 50})
     assert len(store.read_ledger()) <= 60
+
+
+# Replays of what gpt-oss-20b actually sent on 2026-11-06 (sentence guard, string examples).
+def test_weak_model_sentence_guard_and_string_example(ctx):
+    handler = ctx.tools["trust_ladder_learn"]["handler"]
+    out = json.loads(handler({
+        "rule": "Never push directly to main; always push on a branch and open a PR",
+        "guard": "Do not push directly to main; always push on a branch and open a PR",
+        "bad_example": "git push origin main",
+    }, task_id="w1"))
+    assert out["ok"] and out["rung"].startswith("1"), out
+    res = fire(ctx, "pre_tool_call", tool_name="terminal", args={"command": "git push origin main"}, task_id="w2")
+    assert res and res["action"] == "block"
+    assert fire(ctx, "pre_tool_call", tool_name="terminal",
+                args={"command": "git push -u origin fix/x"}, task_id="w2") is None
+
+
+def test_weak_model_no_rule_prose_example(ctx):
+    handler = ctx.tools["trust_ladder_learn"]["handler"]
+    out = json.loads(handler({
+        "guard": "Do not push directly to main; always push on a branch and open a PR",
+        "bad_example": "Pushed code directly to main and committed changes without creating a branch or PR",
+    }, task_id="w3"))
+    assert out["ok"] and out["rung"].startswith("1"), out
+    assert any("description" in p for p in out["problems"])
+
+
+def test_string_example_that_guard_misses_still_downgrades(ctx):
+    handler = ctx.tools["trust_ladder_learn"]["handler"]
+    out = json.loads(handler({"rule": "never push straight to main", "bad_example": "git status"}))
+    assert out["ok"] and out["rung"].startswith("3")

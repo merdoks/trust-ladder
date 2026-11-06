@@ -447,7 +447,27 @@ def normalize_check(spec: dict) -> dict:
     return out
 
 
+def coerce_example(example: Any) -> Any:
+    """Weaker models send examples as a bare command string; accept those.
+
+    A string that looks like a shell command becomes a terminal call. Prose
+    ("pushed code to main without a PR") proves nothing and becomes None.
+    """
+    if isinstance(example, str):
+        text = example.strip().strip("`").strip()
+        if text.startswith("$ "):
+            text = text[2:].strip()
+        if text and "\n" not in text and len(text) <= 400 and _looks_like_command(text):
+            return {"tool": "terminal", "args": {"command": text}}
+        return None
+    if isinstance(example, dict) and isinstance(example.get("args"), str):
+        tool = example.get("tool") if isinstance(example.get("tool"), str) else "terminal"
+        return {"tool": tool, "args": {"command": example["args"]}}
+    return example
+
+
 def _example(example: Any) -> tuple[str, dict] | None:
+    example = coerce_example(example)
     if not isinstance(example, dict):
         return None
     tool = example.get("tool")

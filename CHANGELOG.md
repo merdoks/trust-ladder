@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.1
+- Lenient `trust_ladder_learn` input for weaker models (seen with gpt-oss-20b): a plain-sentence
+  `guard` is read as rule text, a bare command string counts as `bad_example`/`good_example`,
+  prose examples are ignored instead of downgrading a verified guard, and a missing `rule` falls
+  back to the guard sentence. Every adjustment is reported in `problems`.
+
 ## 0.1.0 (unreleased)
 - First release: `/teach`, `/trust`, `/verify`; `trust_ladder_learn` and `trust_ladder_task` tools;
   `hermes trust-ladder …` CLI (in-process plugin mode).

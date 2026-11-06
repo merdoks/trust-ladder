@@ -128,13 +128,33 @@ class TrustLadder:
               review: bool = False, fix: str = "", bad_example: Any = None, good_example: Any = None,
               session_id: str = "") -> dict:
         """Compile and store a correction. Returns {ok, rule, rung, why, problems}."""
+        problems: list[str] = []
+        # Lenient input for weaker models: a plain-sentence guard is read as the rule text,
+        # a bare command string counts as an example, and prose examples are dropped.
+        if isinstance(guard, str):
+            if not str(text or "").strip():
+                text = guard
+            elif guard.strip() and guard.strip() not in str(text):
+                text = f"{text} {guard}"
+            problems.append("guard was a sentence, not a matcher; compiled it from the rule text instead")
+            guard = None
+        elif guard is not None and not isinstance(guard, dict):
+            guard = None
+        if isinstance(check, str) or (check is not None and not isinstance(check, dict)):
+            check = None
+        raw_bad, raw_good = bad_example, good_example
+        bad_example = compiler.coerce_example(bad_example)
+        good_example = compiler.coerce_example(good_example)
+        if raw_bad is not None and bad_example is None:
+            problems.append("bad_example was a description, not a tool call; ignored it")
+        if raw_good is not None and good_example is None:
+            problems.append("good_example was a description, not a tool call; ignored it")
         text = " ".join(str(text or "").split())[: compiler.MAX_RULE_TEXT]
         if not text:
             return {"ok": False, "error": "empty rule"}
         if len([r for r in self.rules() if r.get("enabled", True)]) >= MAX_RULES:
             return {"ok": False, "error": f"rule limit reached ({MAX_RULES}); ask the user to prune with /trust remove"}
 
-        problems: list[str] = []
         record: dict[str, Any] = {"text": text, "source": source, "fix": str(fix or "")[:200]}
         rung = None
 

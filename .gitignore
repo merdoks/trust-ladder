@@ -5,3 +5,4 @@ __pycache__/
 demo/out/
 *.cast
 *.gif
+demo/*.mp4

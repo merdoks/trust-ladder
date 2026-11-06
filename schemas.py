@@ -21,7 +21,9 @@ LEARN = {
         "1 guard (blocks matching tool calls before they run) > 2 check (verifies writes after they run) > "
         "3 rule (reminded every turn) > 4 review (asks the user first). A guard is only installed if it "
         "catches bad_example and lets good_example through; otherwise the rule falls back to a lower rung and "
-        "the result says why. You can add rules but never remove them; only the user can (/trust)."
+        "the result says why. You can add rules but never remove them; only the user can (/trust). "
+        "Minimal call that works: {\"rule\": \"never push straight to main\", \"bad_example\": \"git push origin main\"} "
+        "(a bare command string is accepted as a terminal call)."
     ),
     "parameters": {
         "type": "object",

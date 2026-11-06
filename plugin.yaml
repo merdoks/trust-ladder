@@ -1,5 +1,5 @@
 name: trust-ladder
-version: "0.1.0"
+version: "0.1.1"
 description: "Correct your agent once and it stays corrected: trust-ladder compiles each correction to the highest rung it can prove (a pre_tool_call guard that blocks the repeat, a post-write check, an injected rule, or human review), verifies the guard against the mistake before installing it, gates 'done' on verifier commands, and keeps a ledger of every catch (/teach, /trust, /verify). Disclosure — local only: stores rules, tasks and a catch ledger (matched snippets, no full arguments) under <HERMES_HOME>/plugin-data/trust-ladder/; no network, no telemetry, no credentials; verifier commands you or the agent attach run only through Hermes's own terminal tool (normal approvals apply); guards are best-effort pattern matches, not a sandbox."
 author: "Martins Bluka"
 license: MIT
